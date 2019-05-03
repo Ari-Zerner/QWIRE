@@ -76,7 +76,7 @@ Inductive WF_Term: context -> term -> Prop :=
     WF_Term (b_params ++ c) t ->
     WF_Term (a_params ++ c) (apply_gate g a_params b_params t).
 
-(* apply_gate shorthands for common gates *)
+(* shorthands for continuations *)
 Definition apply_X := @apply_gate 1 σx.
 Definition apply_Y := @apply_gate 1 σy.
 Definition apply_Z := @apply_gate 1 σz.
@@ -84,6 +84,8 @@ Definition apply_swap := @apply_gate 2 swap.
 Definition apply_I (a: context) := @apply_gate (length a) (I (length a)) a.
 Definition apply_Had := @apply_gate 1 hadamard.
 Definition apply_cnot := @apply_gate 2 cnot.
+Definition new0 (a: var) (x: term) := new a (apply_X [a] [a] x).
+Definition rename_vars (a b: context) (x: term) := apply_I a b x.
 
 (* I couldn't find this in the library, so I defined it here.
    If I end up needing a lot of lemmas about it, I'll look more thoroughly. *)
@@ -187,7 +189,7 @@ Definition example_1 theta a x y :=
     @apply_gate 1 (phase_shift theta) [a] [a]
                (measure a (continue x []) (continue y [])).
 
-Lemma WF_example_1: forall theta a x y,
+Example WF_example_1: forall theta a x y,
     WF_Term [a] (example_1 theta a x y).
 Proof.
   unfold example_1. intros.
@@ -209,7 +211,7 @@ Proof.
   apply CEquiv_refl.
 Qed.
 
-Lemma deriv_example_1: forall theta a x y,
+Example deriv_example_1: forall theta a x y,
     QEquiv (example_1 theta a x y)
            (measure a (continue x []) (continue y [])).
 Proof.
@@ -232,4 +234,48 @@ Proof.
     eapply axiom_c.
     reflexivity.
 Qed.
+
+Definition example_2 a b x :=
+  new0 a (apply_Had [a] [a] (measure a (continue x [b]) (apply_Z [b] [b] (continue x [b])))).
+
+Example WF_example_2: forall a b x,
+    a <> b ->
+    WF_Term [b] (example_2 a b x).
+Proof.
+  unfold example_2. intros. unfold new0, apply_Had, apply_X, apply_Z.
+  assert (WFC: WF_Context [a; b]).
+  unfold WF_Context.
+  apply NoDup_cons.
+  apply not_in_cons. split; auto.
+  apply WF_Context_singleton.
+  eapply wf_new. apply WFC.
+  eapply wf_apply_gate with (a_params := [a]).
+  apply σx_unitary.
+  apply WFC. apply WFC. reflexivity. reflexivity.
+  eapply wf_apply_gate. apply H_unitary.
+  apply WFC. apply WFC. reflexivity. reflexivity.
+  eapply wf_measure.
+  apply WFC.
+  apply wf_continue.
+  apply WF_Context_singleton.
+  apply WF_Context_singleton.
+  reflexivity.
+  eapply wf_apply_gate with (a_params := [b]).
+  apply σz_unitary.
+  apply WF_Context_singleton.
+  apply WF_Context_singleton.
+  reflexivity. reflexivity.
+  apply wf_continue.
+  apply WF_Context_singleton.
+  apply WF_Context_singleton.
+  reflexivity.
+Qed.
+
+Example deriv_example_2: forall a b x,
+    QEquiv (example_2 a b x)
+           (measure b (new0 a (continue x [a])) (new a (continue x [a]))).
+Proof.
+  (* Future work: This may need infrastructure for alpha-conversion,
+     although axiom F might suffice here. *)
+Admitted.
 
