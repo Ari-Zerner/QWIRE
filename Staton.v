@@ -77,15 +77,15 @@ Inductive WF_Term: context -> term -> Prop :=
     WF_Term (a_params ++ c) (apply_gate g a_params b_params t).
 
 (* shorthands for continuations *)
-Definition apply_X := @apply_gate 1 σx.
-Definition apply_Y := @apply_gate 1 σy.
-Definition apply_Z := @apply_gate 1 σz.
-Definition apply_swap := @apply_gate 2 swap.
-Definition apply_I (a: context) := @apply_gate (length a) (I (length a)) a.
-Definition apply_Had := @apply_gate 1 hadamard.
-Definition apply_cnot := @apply_gate 2 cnot.
-Definition new0 (a: var) (x: term) := new a (apply_X [a] [a] x).
-Definition rename_vars (a b: context) (x: term) := apply_I a b x.
+Definition apply_X := @apply_gate 1 σx. Hint Unfold apply_X.
+Definition apply_Y := @apply_gate 1 σy. Hint Unfold apply_Y.
+Definition apply_Z := @apply_gate 1 σz. Hint Unfold apply_Z.
+Definition apply_swap := @apply_gate 2 swap. Hint Unfold apply_swap.
+Definition apply_I (a: context) := @apply_gate (length a) (I (length a)) a. Hint Unfold apply_I.
+Definition apply_Had := @apply_gate 1 hadamard. Hint Unfold apply_Had.
+Definition apply_cnot := @apply_gate 2 cnot. Hint Unfold apply_cnot.
+Definition new0 (a: var) (x: term) := new a (apply_X [a] [a] x). Hint Unfold new0.
+Definition rename_vars (a b: context) (x: term) := apply_I a b x. Hint Unfold rename_vars.
 
 (* I couldn't find this in the library, so I defined it here.
    If I end up needing a lot of lemmas about it, I'll look more thoroughly. *)
